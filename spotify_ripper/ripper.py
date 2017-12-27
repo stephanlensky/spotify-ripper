@@ -73,11 +73,11 @@ class Ripper(threading.Thread):
     skip = threading.Event()
     play_token_resume = threading.Event()
 
-    def __init__(self, args):
+    def __init__(self, args, progress_obj=Progress):
         threading.Thread.__init__(self)
 
         # initialize progress meter
-        self.progress = Progress(args, self)
+        self.progress = progress_obj(args, self)
 
         self.args = args
 
