@@ -612,8 +612,9 @@ class Ripper(threading.Thread):
         if track.link.uri in self.track_path_cache:
             return self.track_path_cache[track.link.uri]
 
+        tags = get_current_track_details(self, args.format.strip(), idx, track)
         audio_file = \
-            format_track_string(self, args.format.strip(), idx, track)
+            format_track_string(args.format.strip(), tags)
 
         # in case the file name is too long
         def truncate(_str, max_size):

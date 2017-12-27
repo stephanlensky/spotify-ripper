@@ -164,9 +164,9 @@ def get_playlist_track(track, playlist):
 def change_file_extension(file_name, ext):
     return os.path.splitext(file_name)[0] + "." + ext
 
-
-def format_track_string(ripper, format_string, idx, track):
+def get_current_track_details(ripper, format_string, idx, track):
     args = get_args()
+
     current_album = ripper.current_album
     current_playlist = ripper.current_playlist
 
@@ -297,6 +297,10 @@ def format_track_string(ripper, format_string, idx, track):
         "track_uri": track_uri,
         "uri": track_uri
     }
+    return tags
+
+def format_track_string(format_string, tags):
+    args = get_args()
     fill_tags = {"idx", "index", "track_num", "track_idx",
                  "track_index", "disc_num", "disc_idx", "disc_index",
                  "smart_track_num", "smart_track_idx", "smart_track_index"}
