@@ -230,10 +230,12 @@ class Ripper(threading.Thread):
 
             # TODO: remove dependency on current_album, ...
             for idx, track in enumerate(tracks):
-
                 # ignore local tracks
                 if track.is_local:
                     continue
+
+                if "track_load_hook" in dir(self):
+                    self.track_load_hook(idx, track)
 
                 audio_file = self.format_track_path(idx, track)
                 all_tracks.append((track, audio_file))
