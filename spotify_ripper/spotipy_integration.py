@@ -2,6 +2,7 @@ import sys
 
 import spotipy.util as util
 import spotipy.client
+import spotipy.oauth2 as oauth2
 import os
 
 redirect_uri = 'http://www.purple.com'
@@ -15,9 +16,13 @@ scope = 'playlist-modify-public playlist-modify-private playlist-read-collaborat
 
 token = None
 spotInstance = None
+spotAuthUsername = None
 
 
 def init_spotipy(username):
+    global spotAuthUsername
+    spotAuthUsername = username
+
     global token
     token = util.prompt_for_user_token(username, scope)
 
@@ -26,7 +31,17 @@ def init_spotipy(username):
     spotInstance.trace = False
 
 
+def refresh_access_token():
+    global token
+    token = util.prompt_for_user_token(spotAuthUsername, scope)
+
+    global spotInstance
+    spotInstance = spotipy.Spotify(auth=token)
+    spotInstance.trace = False
+
+
 def remove_all_from_playlist(username, playlistURI):
+    refresh_access_token()
     tracks = get_playlist_tracks(username, playlistURI)
 
     track_ids = []
@@ -38,6 +53,7 @@ def remove_all_from_playlist(username, playlistURI):
 
 
 def get_playlist_tracks(username, playlistURI):
+    refresh_access_token()
     global rPlaylistID
     p1, p2, p3, p4, rPlaylistID = playlistURI.split(':', 5)
 
@@ -59,4 +75,5 @@ def get_playlist_tracks(username, playlistURI):
 
 
 def get_track_json(track_uri):
+    refresh_access_token()
     return spotInstance.track(track_uri)
