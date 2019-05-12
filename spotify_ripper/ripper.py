@@ -12,7 +12,7 @@ from spotify_ripper.web import WebAPI
 from spotify_ripper.sync import Sync
 from spotify_ripper.eventloop import EventLoop
 from datetime import datetime
-from spotify_ripper.remove_all_from_playlist import get_playlist_tracks
+from spotify_ripper.spotipy_integration import get_playlist_tracks, init_spotipy
 import os
 import sys
 import time
@@ -189,11 +189,15 @@ class Ripper(threading.Thread):
         self.ripper_continue.wait()
         if self.abort.is_set():
             return
-        #set session to provate
+
+        # set session to private
         self.session.social.private_session = True
 
         # list of spotify URIs
         uris = args.uri
+
+        # init spotipy api
+        init_spotipy(self.session.user.canonical_name)
 
         def get_tracks_from_uri(uri):
             self.current_playlist = None
@@ -225,11 +229,16 @@ class Ripper(threading.Thread):
 
         # calculate total size and time
         all_tracks = []
+        all_uris = {}
         for uri in uris:
-            tracks = list(get_tracks_from_uri(uri))
+            if uri not in all_uris:
+                all_uris[uri] = list(get_tracks_from_uri(uri))
+            tracks = all_uris[uri]
 
             # TODO: remove dependency on current_album, ...
             for idx, track in enumerate(tracks):
+                print('Loading track {}/{}...'.format(idx, len(tracks)), end='\r')
+                sys.stdout.flush()
 
                 # ignore local tracks
                 if track.is_local:
@@ -237,6 +246,7 @@ class Ripper(threading.Thread):
 
                 audio_file = self.format_track_path(idx, track)
                 all_tracks.append((track, audio_file))
+            print('Loading track {}/{}...'.format(len(tracks), len(tracks)))
 
         self.progress.calc_total(all_tracks)
 
@@ -250,7 +260,9 @@ class Ripper(threading.Thread):
             if self.abort.is_set():
                 break
 
-            tracks = list(get_tracks_from_uri(uri))
+            if uri not in all_uris:
+                all_uris[uri] = list(get_tracks_from_uri(uri))
+            tracks = all_uris[uri]
 
             if args.playlist_sync and self.current_playlist:
                 self.sync = Sync(args, self)
@@ -269,8 +281,8 @@ class Ripper(threading.Thread):
                     track.load(args.timeout)
                     if track.availability != 1 or track.is_local:
                         print(
-                            Fore.RED + 'Track is not available, '
-                                       'skipping...' + Fore.RESET)
+                            Fore.RED + 'Track {} - {} is not available, skipping...'
+                            .format(track.artists[0].name, track.name) + Fore.RESET)
                         self.post.log_failure(track)
                         continue
 
@@ -363,7 +375,7 @@ class Ripper(threading.Thread):
             self.post.create_playlist_wpl(tracks)
 
             # actually removing the tracks from playlist
-            self.post.remove_tracks_from_playlist()
+            # self.post.remove_tracks_from_playlist()
 
             # remove libspotify's offline storage cache
             self.post.remove_offline_cache()
@@ -427,7 +439,6 @@ class Ripper(threading.Thread):
             track = link.as_track()
             return iter([track])
         elif link.type == spotify.LinkType.PLAYLIST:
-            print('get playlist tracks')
             self.playlist_uri = uri
             tracks = get_playlist_tracks(self.session.user.canonical_name, uri)
             track_list = tracks.get('items')
@@ -438,7 +449,6 @@ class Ripper(threading.Thread):
             tracksIter = iter(uriList)
             for i in tracksIter:
                 trackList.append(self.session.get_link(i).as_track())
-            print('Loading playlist...')
             return iter(trackList)
         elif link.type == spotify.LinkType.STARRED:
             link_user = link.as_user()

@@ -9,7 +9,7 @@ import time
 import spotify
 import codecs
 import shutil
-from spotify_ripper.remove_all_from_playlist import remove_all_from_playlist
+from spotify_ripper.spotipy_integration import remove_all_from_playlist
 
 
 class PostActions(object):
