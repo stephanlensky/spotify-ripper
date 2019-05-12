@@ -27,7 +27,6 @@ def init_spotipy(username):
 
 
 def remove_all_from_playlist(username, playlistURI):
-    print('hello remove_all')
     tracks = get_playlist_tracks(username, playlistURI)
 
     track_ids = []
