@@ -17,7 +17,6 @@ develop-eggs
 .installed.cfg
 lib
 lib64
-.cache-*
 
 # Installer logs
 pip-log.txt
@@ -62,3 +61,4 @@ spotify_appkey.key
 *.m4a
 tmp/*
 *~
+.cache-*
